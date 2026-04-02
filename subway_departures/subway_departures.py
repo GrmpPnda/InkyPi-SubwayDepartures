@@ -261,6 +261,9 @@ class SubwayDepartures(BasePlugin):
         max_arrivals = int(
             settings.get('max_arrivals', 8)
         )
+        min_minutes = int(
+            settings.get('min_minutes', 0)
+        )
         timezone = device_config.get_config(
             "timezone", default="America/New_York"
         )
@@ -313,7 +316,7 @@ class SubwayDepartures(BasePlugin):
                 minutes = int(
                     (arr_local - now).total_seconds() / 60
                 )
-                if minutes < 0:
+                if minutes < min_minutes:
                     continue
                 dep_dir = (
                     north

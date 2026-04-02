@@ -44,6 +44,19 @@
     </select>
 </div>
 
+<div class="form-group">
+    <label for="min_minutes" class="form-label">Hide departures within (minutes)</label>
+    <select id="min_minutes" name="min_minutes" class="form-input">
+        <option value="0" selected>0 (show all)</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+    </select>
+</div>
+
 <script>
     const stations = {{ stations_json | safe }};
     let watches = [];
@@ -199,6 +212,7 @@
                 watches = [];
             }
             document.getElementById('max_arrivals').value = pluginSettings.max_arrivals || '8';
+            document.getElementById('min_minutes').value = pluginSettings.min_minutes || '0';
         }
         renderWatchList();
     });
