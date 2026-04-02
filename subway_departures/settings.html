@@ -1,0 +1,199 @@
+<div class="form-group">
+    <label class="form-label">Departure Board</label>
+    <div id="watchList"></div>
+    <input type="hidden" id="watches" name="watches" value="[]">
+</div>
+
+<div class="form-group" style="border: 1px solid rgba(128,128,128,0.3); border-radius: 8px; padding: 12px;">
+    <label class="form-label">Add Station</label>
+
+    <div class="form-group">
+        <label for="sel_station" class="form-label">Station</label>
+        <select id="sel_station" class="form-input">
+            <option value="">Select a station...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="sel_lines" class="form-label">Lines</label>
+        <div id="lineCheckboxes" class="form-group" style="display:flex; flex-wrap:wrap; gap:6px;">
+            <span style="opacity:0.5;">Select a station first</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="sel_direction" class="form-label">Direction</label>
+        <select id="sel_direction" class="form-input">
+            <option value="">Both</option>
+            <option value="N" id="opt_north">Uptown</option>
+            <option value="S" id="opt_south">Downtown</option>
+        </select>
+    </div>
+
+    <button type="button" id="addWatchBtn" class="form-input collapsible" onclick="addWatch()" disabled>Add to Board</button>
+</div>
+
+<div class="form-group">
+    <label for="max_arrivals" class="form-label">Max Departures (total)</label>
+    <select id="max_arrivals" name="max_arrivals" class="form-input">
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8" selected>8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
+    </select>
+</div>
+
+<script>
+    const stations = {{ stations_json | safe }};
+    let watches = [];
+
+    // Build sorted station list
+    const stationList = Object.entries(stations)
+        .map(([cid, info]) => ({ cid, ...info }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Populate station dropdown
+    (function() {
+        const sel = document.getElementById('sel_station');
+        for (const s of stationList) {
+            const opt = document.createElement('option');
+            opt.value = s.cid;
+            opt.textContent = s.name + '  (' + s.lines.join(', ') + ')';
+            sel.appendChild(opt);
+        }
+    })();
+
+    function onStationSelect() {
+        const cid = document.getElementById('sel_station').value;
+        const checkboxDiv = document.getElementById('lineCheckboxes');
+        const addBtn = document.getElementById('addWatchBtn');
+
+        checkboxDiv.innerHTML = '';
+
+        if (!cid || !stations[cid]) {
+            checkboxDiv.innerHTML = '<span style="opacity:0.5;">Select a station first</span>';
+            addBtn.disabled = true;
+            return;
+        }
+
+        const info = stations[cid];
+
+        // Update direction labels
+        document.getElementById('opt_north').textContent = info.north_label || 'Uptown';
+        document.getElementById('opt_south').textContent = info.south_label || 'Downtown';
+
+        // Create line checkboxes — all checked by default
+        for (const line of info.lines) {
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex; align-items:center; gap:4px; cursor:pointer;';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = line;
+            cb.checked = true;
+            cb.className = 'line-cb';
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(line));
+            checkboxDiv.appendChild(label);
+        }
+
+        addBtn.disabled = false;
+    }
+
+    document.getElementById('sel_station').addEventListener('change', onStationSelect);
+
+    function getSelectedLines() {
+        return Array.from(document.querySelectorAll('.line-cb:checked')).map(cb => cb.value);
+    }
+
+    function addWatch() {
+        const cid = document.getElementById('sel_station').value;
+        if (!cid || !stations[cid]) return;
+
+        const info = stations[cid];
+        const selectedLines = getSelectedLines();
+        if (selectedLines.length === 0) return;
+
+        const direction = document.getElementById('sel_direction').value;
+
+        const watch = {
+            complex_id: cid,
+            station_name: info.name,
+            stop_ids: info.stop_ids,
+            lines: selectedLines,
+            direction: direction,
+            north_label: info.north_label || 'Uptown',
+            south_label: info.south_label || 'Downtown',
+            // For display in the list
+            line_filter: selectedLines.length === info.lines.length ? '' : selectedLines.join(','),
+        };
+
+        watches.push(watch);
+        renderWatchList();
+
+        // Reset the form
+        document.getElementById('sel_station').value = '';
+        document.getElementById('sel_direction').value = '';
+        document.getElementById('lineCheckboxes').innerHTML = '<span style="opacity:0.5;">Select a station first</span>';
+        document.getElementById('addWatchBtn').disabled = true;
+    }
+
+    function removeWatch(index) {
+        watches.splice(index, 1);
+        renderWatchList();
+    }
+
+    function renderWatchList() {
+        const container = document.getElementById('watchList');
+        const hiddenInput = document.getElementById('watches');
+        hiddenInput.value = JSON.stringify(watches);
+
+        container.innerHTML = '';
+        if (watches.length === 0) {
+            container.innerHTML = '<div style="opacity:0.5; padding:8px 0;">No stations added yet. Use the form below to add stations to your board.</div>';
+            return;
+        }
+
+        for (let i = 0; i < watches.length; i++) {
+            const w = watches[i];
+            const row = document.createElement('div');
+            row.className = 'form-group';
+            row.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(128,128,128,0.2);';
+
+            const text = document.createElement('div');
+            text.style.flex = '1';
+
+            let desc = w.station_name;
+            const lineDesc = w.line_filter || 'All Lines';
+            let dirDesc = 'Both';
+            if (w.direction === 'N') dirDesc = w.north_label;
+            if (w.direction === 'S') dirDesc = w.south_label;
+            desc += ' — ' + lineDesc + ' · ' + dirDesc;
+
+            text.textContent = desc;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerText = '✕';
+            removeBtn.classList.add('remove-btn');
+            removeBtn.onclick = () => removeWatch(i);
+
+            row.appendChild(text);
+            row.appendChild(removeBtn);
+            container.appendChild(row);
+        }
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+        if (loadPluginSettings && pluginSettings.watches) {
+            try {
+                watches = JSON.parse(pluginSettings.watches);
+            } catch(e) {
+                watches = [];
+            }
+            document.getElementById('max_arrivals').value = pluginSettings.max_arrivals || '8';
+        }
+        renderWatchList();
+    });
+</script>

@@ -1,0 +1,49 @@
+{% extends "plugin.html" %}
+
+{% block content %}
+<div class="subway-container">
+    <div class="top-bar">
+        <span class="board-title">Departures</span>
+        <div class="top-right">
+            <span class="updated">Updated {{ updated }}</span>
+            <svg class="mta-logo" viewBox="0 0 455 500" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#0039A6" d="m0.4 107c45.2-64.6 120-107 205-107 138 0 250 112 250 250s-112 250-250 250c-81.4 0-154-39-199-99.2"/>
+                <path fill="#FFF" d="m34 396s0-87.4-0.8-97.3c0-9.5-4.7-64.2-3.7-73.4l2.6 0.1 32.8 165 45.9-8.1 26.7-153h3c1.4 9.4-2.4 53.8-2.4 63.3-0.8 9.9-0.8 85-0.8 85l46.5-8.1v-230l-72.6-12.6-20.4 141c-0.7 0-20.6-148-20.6-148l-70.2-12.2 5.7 294"/>
+                <polygon fill="#FFF" points="329 321 352 318 355 340 381 335 356 169 325 164 293 350 326 345"/>
+                <polygon fill="#FFF" points="196 200 231 204 231 361 274 354 274 207 302 210 302 160 196 141"/>
+                <polygon fill="#0039A6" points="339 226 334 281 347 280 342 226"/>
+            </svg>
+        </div>
+    </div>
+
+    {% for group in station_groups %}
+    <div class="station-group">
+        <div class="station-header">
+            <h2 class="station-name">{{ group.name }}</h2>
+            <span class="station-subtitle">{{ group.subtitle }}</span>
+        </div>
+
+        {% if group.departures %}
+            {% for dep in group.departures %}
+            <div class="departure-row">
+                <span class="dep-badge" style="background-color: {{ dep.color }};">{{ dep.route_id }}</span>
+                <div class="dep-info">
+                    <span class="dep-destination">{{ dep.destination }}</span>
+                    <span class="dep-direction">{{ dep.direction }}</span>
+                </div>
+                <span class="dep-time">
+                    {% if dep.minutes <= 1 %}
+                        <span class="arriving">NOW</span>
+                    {% else %}
+                        <span class="minutes">{{ dep.minutes }}</span><span class="min-label"> min</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-departures">No upcoming departures</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

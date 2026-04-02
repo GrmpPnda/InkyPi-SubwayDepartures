@@ -1,0 +1,133 @@
+.subway-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 2.5dvh 3.5dvw;
+    box-sizing: border-box;
+    font-family: "Jost", sans-serif;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5dvh;
+}
+
+.board-title {
+    font-size: min(4dvw, 4dvh);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5dvw;
+}
+
+.updated {
+    font-size: min(2.2dvw, 2.2dvh);
+    opacity: 0.45;
+    white-space: nowrap;
+}
+
+.mta-logo {
+    height: min(5dvw, 5dvh);
+    width: auto;
+}
+
+.station-group {
+    margin-bottom: 1.5dvh;
+}
+
+.station-header {
+    display: flex;
+    align-items: baseline;
+    gap: 2dvw;
+    padding-bottom: 0.8dvh;
+    border-bottom: 0.3dvh solid currentColor;
+    margin-bottom: 0.5dvh;
+}
+
+.station-name {
+    font-size: min(4.5dvw, 4.5dvh);
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.station-subtitle {
+    font-size: min(2.5dvw, 2.5dvh);
+    opacity: 0.55;
+    white-space: nowrap;
+}
+
+.departure-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5dvw;
+    padding: 0.8dvh 0;
+    border-bottom: 0.15dvh solid rgba(128, 128, 128, 0.2);
+}
+
+.dep-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(5.5dvw, 5.5dvh);
+    height: min(5.5dvw, 5.5dvh);
+    border-radius: 50%;
+    color: #fff;
+    font-size: min(3.2dvw, 3.2dvh);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.dep-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dep-destination {
+    font-size: min(3.5dvw, 3.5dvh);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.dep-direction {
+    font-size: min(2dvw, 2dvh);
+    opacity: 0.45;
+}
+
+.dep-time {
+    font-size: min(3.5dvw, 3.5dvh);
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.arriving {
+    font-weight: 700;
+}
+
+.minutes {
+    font-size: min(4.5dvw, 4.5dvh);
+    font-weight: 700;
+}
+
+.min-label {
+    font-size: min(2.5dvw, 2.5dvh);
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.no-departures {
+    padding: 1.5dvh 0;
+    font-size: min(3dvw, 3dvh);
+    opacity: 0.45;
+    text-align: center;
+}
