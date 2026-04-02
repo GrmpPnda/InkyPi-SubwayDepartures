@@ -21,15 +21,45 @@ MTA_STATIONS_CSV_URL = (
 
 LINE_TO_FEED = {
     "1": "1", "2": "1", "3": "1",
-    "4": "1", "5": "1", "6": "1", "GS": "1",
-    "A": "A", "C": "A", "E": "A", "H": "A", "FS": "A",
+    "4": "1", "5": "1", "6": "1",
+    "7": "1",
+    "GS": "1",
+    "A": "A", "C": "A", "E": "A", "H": "A",
     "N": "N", "Q": "N", "R": "N", "W": "N",
-    "B": "B", "D": "B", "F": "B", "M": "B",
+    "B": "B", "D": "B", "F": "B", "M": "B", "FS": "B",
     "L": "L",
     "SIR": "SI",
     "G": "G",
     "J": "J", "Z": "J",
-    "7": "7",
+}
+
+# Maps display line names to the route_id used in the GTFS-RT feed.
+# Most lines match, but a few differ.
+LINE_TO_GTFS_ROUTE = {
+    "SIR": "SI",
+}
+
+# Express variants → base line for display purposes.
+# The GTFS-RT feed uses 7X/6X for express service; we show them
+# as their base line number but with a diamond-shaped roundel.
+EXPRESS_TO_BASE = {
+    "7X": "7",
+    "6X": "6",
+}
+
+# Shuttle internal IDs → display name.  Users see "S" for all shuttles.
+SHUTTLE_DISPLAY = {"GS": "S", "FS": "S", "H": "S"}
+
+# Reverse mapping: GTFS route_id back to display name
+GTFS_ROUTE_TO_LINE = {v: k for k, v in LINE_TO_GTFS_ROUTE.items()}
+
+# The MTA stations CSV lists all three shuttles as "S", but the
+# GTFS-RT feeds use distinct route_ids.  We disambiguate by stop_id
+# when building the station index.
+SHUTTLE_STOPS = {
+    "GS": {"901", "902"},
+    "FS": {"D26", "S01", "S03", "S04"},
+    "H":  {"H04", "H12", "H13", "H14", "H15", "H19"},
 }
 
 LINE_COLORS = {
@@ -141,6 +171,22 @@ def _fetch_station_index():
             if r.strip()
         ]
 
+        # The CSV uses "S" for all three shuttles.  Disambiguate
+        # into GS / FS / H based on the stop_id.
+        resolved_routes = []
+        for r in routes:
+            if r == "S":
+                for shuttle_line, stop_set in SHUTTLE_STOPS.items():
+                    if gtfs_id in stop_set:
+                        resolved_routes.append(shuttle_line)
+                        break
+                else:
+                    # Unknown shuttle stop — keep generic S
+                    resolved_routes.append(r)
+            else:
+                resolved_routes.append(r)
+        routes = resolved_routes
+
         if cid not in complexes:
             complexes[cid] = {
                 "name": name,
@@ -194,7 +240,10 @@ class SubwayDepartures(BasePlugin):
             stations = {}
 
         template_params['stations_json'] = json.dumps(stations)
-        template_params['line_colors'] = LINE_COLORS
+        # Build a display-friendly line_colors map that includes "S"
+        display_colors = dict(LINE_COLORS)
+        display_colors["S"] = LINE_COLORS.get("GS", "#808183")
+        template_params['line_colors'] = display_colors
         return template_params
 
     def generate_image(self, settings, device_config):
@@ -271,17 +320,31 @@ class SubwayDepartures(BasePlugin):
                     if arrival.stop_id.endswith("N")
                     else south
                 )
+                # Map GTFS route_id back to display name
+                # (e.g. "SI" -> "SIR", "7X" -> "7")
+                display_route = GTFS_ROUTE_TO_LINE.get(
+                    arrival.route_id, arrival.route_id
+                )
+                is_express = display_route in EXPRESS_TO_BASE
+                display_route = EXPRESS_TO_BASE.get(
+                    display_route, display_route
+                )
+                # Shuttles display as "S"
+                display_label = SHUTTLE_DISPLAY.get(
+                    display_route, display_route
+                )
                 deps.append({
-                    "route_id": arrival.route_id,
+                    "route_id": display_label,
                     "destination": (
                         arrival.destination or dep_dir
                     ),
                     "time": arr_local.strftime("%-I:%M %p"),
                     "minutes": minutes,
                     "color": LINE_COLORS.get(
-                        arrival.route_id, "#808183"
+                        display_route, "#808183"
                     ),
                     "direction": dep_dir,
+                    "is_express": is_express,
                 })
 
             deps.sort(key=lambda d: d["minutes"])
@@ -346,16 +409,27 @@ class SubwayDepartures(BasePlugin):
                             feed_id=feed_id,
                             session=session,
                         )
-                        for stop_id in arg["stop_ids"]:
-                            try:
-                                arr = await feed.get_arrivals(
-                                    route_id=route_id,
-                                    stop_id=stop_id,
-                                    max_arrivals=max_per,
-                                )
-                                watch_arrivals.extend(arr)
-                            except Exception:
-                                pass
+                        # Use the GTFS-RT route_id (e.g. "SI")
+                        # instead of the display name (e.g. "SIR")
+                        gtfs_route = LINE_TO_GTFS_ROUTE.get(
+                            route_id, route_id
+                        )
+                        # Also query express variants (e.g. 7 → 7X)
+                        gtfs_routes = [gtfs_route]
+                        for expr, base in EXPRESS_TO_BASE.items():
+                            if base == gtfs_route:
+                                gtfs_routes.append(expr)
+                        for gr in gtfs_routes:
+                            for stop_id in arg["stop_ids"]:
+                                try:
+                                    arr = await feed.get_arrivals(
+                                        route_id=gr,
+                                        stop_id=stop_id,
+                                        max_arrivals=max_per,
+                                    )
+                                    watch_arrivals.extend(arr)
+                                except Exception:
+                                    pass
                     results.append(watch_arrivals)
             return results
         return asyncio.run(_fetch())

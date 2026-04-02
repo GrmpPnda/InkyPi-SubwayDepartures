@@ -86,6 +86,23 @@
     flex-shrink: 0;
 }
 
+.dep-badge-label {
+    display: block;
+}
+
+/* Express diamond: rotate the container 45°, counter-rotate the text */
+.dep-badge-express {
+    border-radius: 15%;
+    transform: rotate(45deg);
+    /* slightly smaller so the diamond doesn't clip */
+    width: min(5dvw, 5dvh);
+    height: min(5dvw, 5dvh);
+}
+
+.dep-badge-express .dep-badge-label {
+    transform: rotate(-45deg);
+}
+
 .dep-info {
     flex: 1;
     display: flex;

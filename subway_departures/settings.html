@@ -48,6 +48,12 @@
     const stations = {{ stations_json | safe }};
     let watches = [];
 
+    // Shuttle display: GS/FS/H all show as "S" to the user
+    const SHUTTLE_IDS = {'GS': true, 'FS': true, 'H': true};
+    function displayLine(line) {
+        return SHUTTLE_IDS[line] ? 'S' : line;
+    }
+
     // Build sorted station list
     const stationList = Object.entries(stations)
         .map(([cid, info]) => ({ cid, ...info }))
@@ -59,7 +65,7 @@
         for (const s of stationList) {
             const opt = document.createElement('option');
             opt.value = s.cid;
-            opt.textContent = s.name + '  (' + s.lines.join(', ') + ')';
+            opt.textContent = s.name + '  (' + s.lines.map(displayLine).join(', ') + ')';
             sel.appendChild(opt);
         }
     })();
@@ -93,7 +99,7 @@
             cb.checked = true;
             cb.className = 'line-cb';
             label.appendChild(cb);
-            label.appendChild(document.createTextNode(line));
+            label.appendChild(document.createTextNode(displayLine(line)));
             checkboxDiv.appendChild(label);
         }
 

@@ -26,7 +26,9 @@
         {% if group.departures %}
             {% for dep in group.departures %}
             <div class="departure-row">
-                <span class="dep-badge" style="background-color: {{ dep.color }};">{{ dep.route_id }}</span>
+                <span class="dep-badge{% if dep.is_express %} dep-badge-express{% endif %}" style="background-color: {{ dep.color }};">
+                    <span class="dep-badge-label">{{ dep.route_id }}</span>
+                </span>
                 <div class="dep-info">
                     <span class="dep-destination">{{ dep.destination }}</span>
                     <span class="dep-direction">{{ dep.direction }}</span>
