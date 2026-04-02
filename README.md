@@ -20,7 +20,7 @@ An [InkyPi](https://github.com/fatihak/InkyPi) plugin that displays a real-time 
 Install the plugin using the InkyPi CLI:
 
 ```bash
-inkypi-plugin install subway_departures https://github.com/YOUR_USERNAME/InkyPi-SubwayDepartures
+inkypi-plugin install subway_departures https://github.com/GrmpPnda/InkyPi-SubwayDepartures
 ```
 
 Then install the Python dependency:
